@@ -1,0 +1,33 @@
+{
+  "name": "backbonekts",
+  "version": "0.1.0",
+  "authors": [
+    "Grigory Ozhegov <ozhegov@ktsstudio.ru>"
+  ],
+  "description": "Base classes for powerfull development under Backbone",
+  "main": "src/backbonekts.js",
+  "moduleType": [
+    "amd",
+    "globals"
+  ],
+  "keywords": [
+    "backbone",
+    "amd",
+    "requrejs"
+  ],
+  "private": true,
+  "license": "MIT",
+  "homepage": "http://gitlab.ktsstudio.ru/kts-libs/backbonekts",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "backbone": null,
+    "underscore": null,
+    "jquery": "latest"
+  }
+}
