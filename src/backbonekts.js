@@ -47,11 +47,36 @@
 
     BackboneKTS.Config = {
         apiURL: false,
+        apiPersistentData: {
+            'v': '1' // api version
+        },
         staticPrefix: false,
         mediaPrefix: false,
-        apiVersion: '1',
+
+        queryString: function () {
+            // This function is anonymous, is executed immediately and
+            // the return value is assigned to QueryString!
+            var query_string = {};
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+                var pair = vars[i].split("=");
+                // If first entry with this name
+                if (typeof query_string[pair[0]] === "undefined") {
+                    query_string[pair[0]] = decodeURIComponent(pair[1]);
+                    // If second entry with this name
+                } else if (typeof query_string[pair[0]] === "string") {
+                    var arr = [ query_string[pair[0]],decodeURIComponent(pair[1]) ];
+                    query_string[pair[0]] = arr;
+                    // If third or later entry with this name
+                } else {
+                    query_string[pair[0]].push(decodeURIComponent(pair[1]));
+                }
+            }
+            return query_string;
+        }(),
         getMethodUrl: function (methodName, args) {
-            var url = this.apiURL + methodName + '?v=' + this.apiVersion;
+            var url = this.apiURL + methodName;
             if (typeof args === 'object') {
                 for (var i in args) {
                     if (args[i] !== undefined) {
@@ -66,6 +91,19 @@
         },
         getMediaUrl: function (mediaPath) {
             return this.mediaPrefix + mediaPath;
+        },
+        apiCall: function (method, data, options) {
+            options = options || {};
+            var requestData = _.extend({}, this.apiPersistentData, data);
+            $.ajax({
+                method: 'get',
+                url: this.getMethodUrl(method),
+                data: requestData,
+                beforeSend: options.onProgressStart || (function () {}),
+                complete: options.onProgressEnd || (function () {}),
+                success: options.onSuccess || (function () {}),
+                error: options.onError || (function () {})
+            });
         }
     };
 
@@ -137,7 +175,7 @@
         }
     });
 
-    BackboneKTS.Router = Backbone.Router.extend({
+    BackboneKTS.App = Backbone.Router.extend({
         redirect: function (path) {
             Backbone.history.navigate('/' + path, true);
         },
