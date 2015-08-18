@@ -13,6 +13,12 @@
 }(typeof exports === 'object' && exports || this, function (Backbone, _, Notific, $) {
     var BackboneKTS = {};
 
+    BackboneKTS.debugLog = function() {
+        if (console && _.isFunction(console.log)) {
+            console.log.apply(console, arguments);
+        }
+    };
+
     BackboneKTS.Collection = Backbone.Collection.extend({
         totalCount: 0,
         pageCount: 0,
@@ -49,7 +55,7 @@
             if (typeof args === 'object') {
                 for (var i in args) {
                     if (args[i] !== undefined) {
-                        url += ('&' + i + '=' + args[i]);
+                        url += ('&' + i + '=' + encodeURIComponent(args[i]));
                     }
                 }
             }
@@ -239,7 +245,7 @@
                     timeout: 2000
                 });
             } else {
-                console.log('Notific is undefined');
+                BackboneKTS.debugLog('Notific is undefined');
             }
         },
         _showError: function (title, text) {
@@ -253,7 +259,7 @@
                     timeout: 2000
                 });
             } else {
-                console.log('Notific is undefined');
+                BackboneKTS.debugLog('Notific is undefined');
             }
         }
     });
