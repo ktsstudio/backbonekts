@@ -1,7 +1,7 @@
 {
   "name": "backbonekts",
   "version": "0.1.0",
-  "description": "Base classes for powerfull development under Backbone",
+  "description": "Base classes for powerful Backbone development",
   "keywords": [
     "backbone",
     "amd",
@@ -10,9 +10,9 @@
   "homepage": "http://gitlab.ktsstudio.ru/kts-libs/backbonekts",
   "bugs": "http://gitlab.ktsstudio.ru/kts-libs/backbonekts",
   "author": {
-    "name": "Grigory Ozhegov",
-    "email": "ozhegov@ktsstudio.ru",
-    "url": "biryukov.ws"
+    "name": "kts",
+    "email": "team@ktsstudio.ru",
+    "url": "ktsstudio.ru"
   },
   "repository": {
     "type": "git",
