@@ -41,7 +41,7 @@
         parse: function (response) {
             this.totalCount = response.data.count;
             this.pageCount = parseInt(this.totalCount / this.pageSize, 10) + ((this.totalCount % this.pageSize) > 0 ? 1 : 0);
-            return response.data.items;
+            return [].slice ? (response.data.items || []).slice(0, this.totalCount) : response.data.items;
         }
     });
 
@@ -52,6 +52,7 @@
         },
         staticPrefix: false,
         mediaPrefix: false,
+        webRoot: false,
 
         queryString: function () {
             // This function is anonymous, is executed immediately and
@@ -87,10 +88,10 @@
             return url;
         },
         getStaticUrl: function (staticPath) {
-            return this.staticPrefix + staticPath;
+            return this.webRoot + this.staticPrefix + staticPath;
         },
         getMediaUrl: function (mediaPath) {
-            return this.mediaPrefix + mediaPath;
+            return this.webRoot + this.mediaPrefix + mediaPath;
         },
         apiCall: function (method, data, options) {
             options = options || {};
@@ -196,9 +197,6 @@
 
     BackboneKTS.View = Backbone.View.extend({
         el: '#content',
-        actions: function () {
-            return {};
-        },
         redirect: function (path) {
             Backbone.history.navigate('/' + path, true);
         },
@@ -211,8 +209,10 @@
             } else {
                 passArguments = Array.prototype.slice.call(arguments, 1);
             }
-            if (typeof this.actions()[action] === 'function') {
-                this.actions()[action].apply(this, passArguments);
+            var actionCapitalized = action.charAt(0).toUpperCase() + action.substring(1).toLowerCase();
+            var actionHandler = 'action'+actionCapitalized;
+            if (typeof this[actionHandler] === 'function') {
+                this[actionHandler].apply(this, passArguments);
             } else {
                 this._defaultAction();
             }
