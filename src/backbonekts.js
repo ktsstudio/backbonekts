@@ -41,7 +41,7 @@
         parse: function (response) {
             this.totalCount = response.data.count;
             this.pageCount = parseInt(this.totalCount / this.pageSize, 10) + ((this.totalCount % this.pageSize) > 0 ? 1 : 0);
-            return [].slice ? (response.data.items || []).slice(0, this.totalCount) : response.data.items;
+            return [].slice ? (response.data.items || response.data || []).slice(0, this.totalCount) : (response.data.items || response.data || []);
         }
     });
 
@@ -50,6 +50,7 @@
         apiPersistentData: {
             'v': '1' // api version
         },
+        apiMethod: 'get',
         staticPrefix: false,
         mediaPrefix: false,
         webRoot: false,
@@ -78,12 +79,16 @@
         }(),
         getMethodUrl: function (methodName, args) {
             var url = this.apiURL + methodName;
+            var urlArgs = [];
             if (typeof args === 'object') {
                 for (var i in args) {
                     if (args[i] !== undefined) {
-                        url += ('&' + i + '=' + encodeURIComponent(args[i]));
+                        urlArgs.push(i + '=' + encodeURIComponent(args[i]));
                     }
                 }
+            }
+            if (urlArgs.length) {
+                url += '?'+urlArgs.join('&');
             }
             return url;
         },
@@ -97,7 +102,7 @@
             options = options || {};
             var requestData = _.extend({}, this.apiPersistentData, data);
             $.ajax({
-                method: 'get',
+                method: options.method || this.apiMethod,
                 url: this.getMethodUrl(method),
                 data: requestData,
                 beforeSend: options.onProgressStart || (function () {}),
@@ -200,6 +205,8 @@
         redirect: function (path) {
             Backbone.history.navigate('/' + path, true);
         },
+        beforeAction: function () {},
+        afterAction: function () {},
         render: function () {
             var action = arguments[0];
             var passArguments = null;
@@ -209,6 +216,7 @@
             } else {
                 passArguments = Array.prototype.slice.call(arguments, 1);
             }
+            this.beforeAction();
             var actionCapitalized = action.charAt(0).toUpperCase() + action.substring(1).toLowerCase();
             var actionHandler = 'action'+actionCapitalized;
             if (typeof this[actionHandler] === 'function') {
@@ -216,6 +224,7 @@
             } else {
                 this._defaultAction();
             }
+            this.afterAction();
         },
         serializeForm: function (form) {
             var result = {};
