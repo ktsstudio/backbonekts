@@ -100,6 +100,7 @@
         },
         apiCall: function (method, data, options) {
             options = options || {};
+            data = data || {};
             var requestData = _.extend({}, this.apiPersistentData, data);
             $.ajax({
                 method: options.method || this.apiMethod,
