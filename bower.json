@@ -28,6 +28,6 @@
   "dependencies": {
     "backbone": null,
     "underscore": null,
-    "jquery": "latest"
+    "jquery": null
   }
 }
