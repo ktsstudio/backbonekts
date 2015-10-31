@@ -1,10 +1,10 @@
 {
   "name": "backbonekts",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "authors": [
-    "Grigory Ozhegov <ozhegov@ktsstudio.ru>"
+    "kts <team@ktsstudio.ru>"
   ],
-  "description": "Base classes for powerfull development under Backbone",
+  "description": "Base classes for powerful Backbone development",
   "main": "src/backbonekts.js",
   "moduleType": [
     "amd",
@@ -28,6 +28,6 @@
   "dependencies": {
     "backbone": null,
     "underscore": null,
-    "jquery": "latest"
+    "jquery": null
   }
 }
