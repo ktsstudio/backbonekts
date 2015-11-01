@@ -13,9 +13,38 @@
 }(typeof exports === 'object' && exports || this, function (Backbone, _, Notific, $) {
     var BackboneKTS = {};
 
-    BackboneKTS.debugLog = function() {
+    BackboneKTS.log = function () {
         if (console && _.isFunction(console.log)) {
             console.log.apply(console, arguments);
+        }
+    };
+
+    BackboneKTS.error = function () {
+        if (console && _.isFunction(console.error)) {
+            console.error.apply(console, arguments);
+        }
+    };
+
+    BackboneKTS.viewManagerMixin = {
+        _viewsInstance: {},
+        views: {},
+        _getViewByName: function (name) {
+            if (typeof this._viewsInstance[name] === 'undefined') {
+                var View = this.views[name];
+                if (typeof View !== 'undefined') {
+                    this._viewsInstance[name] = new View();
+                } else {
+                    return null;
+                }
+            }
+            return this._viewsInstance[name];
+        }
+    };
+
+    BackboneKTS.validationMixin = {
+        validateEmail: function (email) {
+            var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+            return re.test(email);
         }
     };
 
@@ -54,6 +83,7 @@
         staticPrefix: false,
         mediaPrefix: false,
         webRoot: false,
+        imgResizerUrl: false,
 
         queryString: function () {
             // This function is anonymous, is executed immediately and
@@ -61,14 +91,14 @@
             var query_string = {};
             var query = window.location.search.substring(1);
             var vars = query.split("&");
-            for (var i=0;i<vars.length;i++) {
+            for (var i = 0; i < vars.length; i++) {
                 var pair = vars[i].split("=");
                 // If first entry with this name
                 if (typeof query_string[pair[0]] === "undefined") {
                     query_string[pair[0]] = decodeURIComponent(pair[1]);
                     // If second entry with this name
                 } else if (typeof query_string[pair[0]] === "string") {
-                    var arr = [ query_string[pair[0]],decodeURIComponent(pair[1]) ];
+                    var arr = [query_string[pair[0]], decodeURIComponent(pair[1])];
                     query_string[pair[0]] = arr;
                     // If third or later entry with this name
                 } else {
@@ -88,7 +118,7 @@
                 }
             }
             if (urlArgs.length) {
-                url += '?'+urlArgs.join('&');
+                url += '?' + urlArgs.join('&');
             }
             return url;
         },
@@ -98,6 +128,7 @@
         getMediaUrl: function (mediaPath) {
             return this.webRoot + this.mediaPrefix + mediaPath;
         },
+
         apiCall: function (method, data, options) {
             options = options || {};
             data = data || {};
@@ -111,6 +142,21 @@
                 success: options.onSuccess || (function () {}),
                 error: options.onError || (function () {})
             });
+        },
+        getImgCropUrl: function (url, width, height) {
+            return this._getImgFilterUrl(url, width, height, 'crop');
+        },
+        getImgResizeUrl: function (url, width, height) {
+            return this._getImgFilterUrl(url, width, height, 'resize');
+        },
+        _getImgFilterUrl: function (url, width, height, type) {
+            width = parseInt(width);
+            height = parseInt(height);
+
+            width = isNaN(width) ? '-' : String(width);
+            height = isNaN(height) ? '-' : String(height);
+
+            return this.imgResizerUrl + '/' + type + '/' + width + 'x' + height + '?url=' + url;
         }
     };
 
@@ -144,7 +190,7 @@
                 dataType: 'json'
             };
             if (!options.url) {
-                params.url = _.result(model, 'url') || console.error('URL not defined');
+                params.url = _.result(model, 'url') || BackboneKTS.error('URL not defined');
             }
             if (options.data === null && model && (method === 'create' || method === 'update' || method === 'patch')) {
                 params.contentType = 'application/json';
@@ -173,6 +219,12 @@
             if (params.type !== 'GET' && !options.emulateJSON) {
                 params.processData = false;
             }
+            if (params.type === 'PATCH' && noXhrPatch) {
+                params.xhr = function () {
+                    return new ActiveXObject("Microsoft.XMLHTTP");
+                };
+            }
+
             var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
             model.trigger('request', model, xhr, options);
             return xhr;
@@ -182,135 +234,127 @@
         }
     });
 
-    BackboneKTS.App = Backbone.Router.extend({
-        redirect: function (path) {
-            Backbone.history.navigate('/' + path, true);
-        },
-        _viewsInstance: {},
-        views: {},
-        _getViewByName: function (name) {
-            if (typeof this._viewsInstance[name] === 'undefined') {
-                var View = this.views[name];
-                if (typeof View !== 'undefined') {
-                    this._viewsInstance[name] = new View();
-                } else {
-                    return null;
-                }
+    BackboneKTS.Router = Backbone.Router.extend(_.extend({
+            redirect: function (path) {
+                Backbone.history.navigate('/' + path, true);
             }
-            return this._viewsInstance[name];
-        }
-    });
+        },
+        BackboneKTS.viewManagerMixin
+    ));
 
-    BackboneKTS.View = Backbone.View.extend({
-        el: '#content',
-        redirect: function (path) {
-            Backbone.history.navigate('/' + path, true);
-        },
-        beforeAction: function () {},
-        afterAction: function () {},
-        render: function () {
-            var action = arguments[0];
-            var passArguments = null;
-            if (typeof  action !== "string") {
-                action = 'index';
-                passArguments = Array.prototype.slice.call(arguments, 0);
-            } else {
-                passArguments = Array.prototype.slice.call(arguments, 1);
-            }
-            this.beforeAction();
-            var actionCapitalized = action.charAt(0).toUpperCase() + action.substring(1).toLowerCase();
-            var actionHandler = 'action'+actionCapitalized;
-            if (typeof this[actionHandler] === 'function') {
-                this[actionHandler].apply(this, passArguments);
-            } else {
-                this._defaultAction();
-            }
-            this.afterAction();
-        },
-        serializeForm: function (form) {
-            var result = {};
-            _.each($(form).serializeArray(), function (element) {
-                var regexp = /\[(\w+)\]/ig;
-                var matchField = element.name.match(regexp);
-                if (matchField === null) {
-                    result[element.name] = element.value;
+    BackboneKTS.View = Backbone.View.extend(_.extend({
+            el: '#content',
+            redirect: function (path) {
+                Backbone.history.navigate('/' + path, true);
+            },
+            beforeAction: function () {},
+            afterAction: function () {},
+            render: function () {
+                var action = arguments[0];
+                var passArguments = null;
+                if (typeof  action !== "string") {
+                    action = 'index';
+                    passArguments = Array.prototype.slice.call(arguments, 0);
                 } else {
-                    var fieldName = element.name.slice(0, element.name.search(regexp));
-                    var walkFields = function (object, chain, value) {
-                        if (chain.length === 0) {
-                            if (!isNaN(parseInt(value, 10)) && String(parseInt(value, 10)).length === value.length) {
-                                return parseInt(value, 10);
-                            }
-                            if (!isNaN(parseFloat(value)) && String(parseFloat(value)).length === value.length) {
-                                return parseFloat(value);
-                            }
-                            return value;
-                        } else {
-                            var indexName = chain[0].slice(1, chain[0].length - 1);
-                            if (isNaN(parseInt(indexName, 10)) || String(parseInt(indexName, 10)).length !== indexName.length) {
-                                if (object === undefined) {
-                                    object = {};
+                    passArguments = Array.prototype.slice.call(arguments, 1);
+                }
+                this.beforeAction();
+                var actionCapitalized = action.charAt(0).toUpperCase() + action.substring(1).toLowerCase();
+                var actionHandler = 'action' + actionCapitalized;
+                if (typeof this[actionHandler] === 'function') {
+                    this[actionHandler].apply(this, passArguments);
+                } else {
+                    this._defaultAction();
+                }
+                this.afterAction();
+            },
+            serializeForm: function (form) {
+                var result = {};
+                _.each($(form).serializeArray(), function (element) {
+                    var regexp = /\[(\w+)\]/ig;
+                    var matchField = element.name.match(regexp);
+                    if (matchField === null) {
+                        result[element.name] = element.value;
+                    } else {
+                        var fieldName = element.name.slice(0, element.name.search(regexp));
+                        var walkFields = function (object, chain, value) {
+                            if (chain.length === 0) {
+                                if (!isNaN(parseInt(value, 10)) && String(parseInt(value, 10)).length === value.length) {
+                                    return parseInt(value, 10);
                                 }
+                                if (!isNaN(parseFloat(value)) && String(parseFloat(value)).length === value.length) {
+                                    return parseFloat(value);
+                                }
+                                return value;
                             } else {
-                                if (object === undefined) {
-                                    object = [];
+                                var indexName = chain[0].slice(1, chain[0].length - 1);
+                                if (isNaN(parseInt(indexName, 10)) || String(parseInt(indexName, 10)).length !== indexName.length) {
+                                    if (object === undefined) {
+                                        object = {};
+                                    }
+                                } else {
+                                    if (object === undefined) {
+                                        object = [];
+                                    }
+                                }
+                                object[indexName] = walkFields(object[indexName], chain.slice(1), value);
+                            }
+                            return object;
+                        };
+                        result[fieldName] = walkFields(result[fieldName], matchField, element.value);
+                    }
+                });
+                _.map(result, function (value, key) {
+                    if (typeof value === 'object') {
+                        if (Array.isArray(value)) {
+                            var nullLessArray = [];
+                            for (var i in value) {
+                                if (value[i] !== null && value[i] !== undefined) {
+                                    nullLessArray.push(value[i]);
                                 }
                             }
-                            object[indexName] = walkFields(object[indexName], chain.slice(1), value);
+                            value = nullLessArray;
                         }
-                        return object;
-                    };
-                    result[fieldName] = walkFields(result[fieldName], matchField, element.value);
-                }
-            });
-            _.map(result, function (value, key) {
-                if (typeof value === 'object') {
-                    if (Array.isArray(value)) {
-                        var nullLessArray = [];
-                        for (var i in value) {
-                            if (value[i] !== null && value[i] !== undefined) {
-                                nullLessArray.push(value[i]);
-                            }
-                        }
-                        value = nullLessArray;
+                        result[key] = JSON.stringify(value);
                     }
-                    result[key] = JSON.stringify(value);
+                });
+                return result;
+            },
+            _defaultAction: function () {
+                this.$el.html($('<h1/>', {html: '404'}));
+            },
+            _showSuccess: function (title, text) {
+                if (title === undefined) {
+                    title = 'Выполнено';
                 }
-            });
-            return result;
+                if (Notific !== undefined) {
+                    Notific.success({
+                        title: title,
+                        text: text,
+                        timeout: 2000
+                    });
+                } else {
+                    BackboneKTS.debugLog('Notific is undefined');
+                }
+            },
+            _showError: function (title, text) {
+                if (title === undefined) {
+                    title = 'Ошибка';
+                }
+                if (Notific !== undefined) {
+                    Notific.error({
+                        title: title,
+                        text: text,
+                        timeout: 2000
+                    });
+                } else {
+                    BackboneKTS.debugLog('Notific is undefined');
+                }
+            }
         },
-        _defaultAction: function () {
-            this.$el.html($('<h1/>', {html: '404'}));
-        },
-        _showSuccess: function (title, text) {
-            if (title === undefined) {
-                title = 'Выполнено';
-            }
-            if (Notific !== undefined) {
-                Notific.success({
-                    title: title,
-                    text: text,
-                    timeout: 2000
-                });
-            } else {
-                BackboneKTS.debugLog('Notific is undefined');
-            }
-        },
-        _showError: function (title, text) {
-            if (title === undefined) {
-                title = 'Ошибка';
-            }
-            if (Notific !== undefined) {
-                Notific.error({
-                    title: title,
-                    text: text,
-                    timeout: 2000
-                });
-            } else {
-                BackboneKTS.debugLog('Notific is undefined');
-            }
-        }
-    });
+        BackboneKTS.viewManagerMixin,
+        BackboneKTS.validationMixin
+    ));
 
     return BackboneKTS;
 }));
