@@ -85,13 +85,13 @@
         webRoot: false,
         imgResizerUrl: false,
 
-        queryString: function () {
+        queryString: (function () {
             // This function is anonymous, is executed immediately and
             // the return value is assigned to QueryString!
             var query_string = {};
             var query = window.location.search.substring(1);
             var vars = query.split("&");
-            for (var i = 0; i < vars.length; i++) {
+            for (var i = 0; i < vars.length; i += 1) {
                 var pair = vars[i].split("=");
                 // If first entry with this name
                 if (typeof query_string[pair[0]] === "undefined") {
@@ -106,7 +106,7 @@
                 }
             }
             return query_string;
-        }(),
+        }()),
         getMethodUrl: function (methodName, args) {
             var url = this.apiURL + methodName;
             var urlArgs = [];
@@ -137,10 +137,10 @@
                 method: options.method || this.apiMethod,
                 url: this.getMethodUrl(method),
                 data: requestData,
-                beforeSend: options.onProgressStart || (function () {}),
-                complete: options.onProgressEnd || (function () {}),
-                success: options.onSuccess || (function () {}),
-                error: options.onError || (function () {})
+                beforeSend: options.onProgressStart || function () {},
+                complete: options.onProgressEnd || function () {},
+                success: options.onSuccess || function () {},
+                error: options.onError || function () {}
             });
         },
         getImgCropUrl: function (url, width, height) {
@@ -150,8 +150,8 @@
             return this._getImgFilterUrl(url, width, height, 'resize');
         },
         _getImgFilterUrl: function (url, width, height, type) {
-            width = parseInt(width);
-            height = parseInt(height);
+            width = parseInt(width, 10);
+            height = parseInt(height, 10);
 
             width = isNaN(width) ? '-' : String(width);
             height = isNaN(height) ? '-' : String(height);
@@ -218,11 +218,6 @@
             }
             if (params.type !== 'GET' && !options.emulateJSON) {
                 params.processData = false;
-            }
-            if (params.type === 'PATCH' && noXhrPatch) {
-                params.xhr = function () {
-                    return new ActiveXObject("Microsoft.XMLHTTP");
-                };
             }
 
             var xhr = options.xhr = Backbone.ajax(_.extend(params, options));

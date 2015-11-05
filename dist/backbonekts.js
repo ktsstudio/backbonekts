@@ -1,7 +1,7 @@
 /*! 
-* backbonekts - v0.1.0 - 2015-08-17
+* backbonekts - v0.2.0 - 2015-11-05
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
-* Copyright (c) 2015 Grigory Ozhegov
+* Copyright (c) 2015 kts
 * Licensed MIT 
 */
 
@@ -19,6 +19,41 @@
     }
 }(typeof exports === 'object' && exports || this, function (Backbone, _, Notific, $) {
     var BackboneKTS = {};
+
+    BackboneKTS.log = function () {
+        if (console && _.isFunction(console.log)) {
+            console.log.apply(console, arguments);
+        }
+    };
+
+    BackboneKTS.error = function () {
+        if (console && _.isFunction(console.error)) {
+            console.error.apply(console, arguments);
+        }
+    };
+
+    BackboneKTS.viewManagerMixin = {
+        _viewsInstance: {},
+        views: {},
+        _getViewByName: function (name) {
+            if (typeof this._viewsInstance[name] === 'undefined') {
+                var View = this.views[name];
+                if (typeof View !== 'undefined') {
+                    this._viewsInstance[name] = new View();
+                } else {
+                    return null;
+                }
+            }
+            return this._viewsInstance[name];
+        }
+    };
+
+    BackboneKTS.validationMixin = {
+        validateEmail: function (email) {
+            var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+            return re.test(email);
+        }
+    };
 
     BackboneKTS.Collection = Backbone.Collection.extend({
         totalCount: 0,
@@ -42,31 +77,93 @@
         parse: function (response) {
             this.totalCount = response.data.count;
             this.pageCount = parseInt(this.totalCount / this.pageSize, 10) + ((this.totalCount % this.pageSize) > 0 ? 1 : 0);
-            return response.data.items;
+            return [].slice ? (response.data.items || response.data || []).slice(0, this.totalCount) : (response.data.items || response.data || []);
         }
     });
 
     BackboneKTS.Config = {
         apiURL: false,
+        apiPersistentData: {
+            'v': '1' // api version
+        },
+        apiMethod: 'get',
         staticPrefix: false,
         mediaPrefix: false,
-        apiVersion: '1',
+        webRoot: false,
+        imgResizerUrl: false,
+
+        queryString: (function () {
+            // This function is anonymous, is executed immediately and
+            // the return value is assigned to QueryString!
+            var query_string = {};
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i = 0; i < vars.length; i += 1) {
+                var pair = vars[i].split("=");
+                // If first entry with this name
+                if (typeof query_string[pair[0]] === "undefined") {
+                    query_string[pair[0]] = decodeURIComponent(pair[1]);
+                    // If second entry with this name
+                } else if (typeof query_string[pair[0]] === "string") {
+                    var arr = [query_string[pair[0]], decodeURIComponent(pair[1])];
+                    query_string[pair[0]] = arr;
+                    // If third or later entry with this name
+                } else {
+                    query_string[pair[0]].push(decodeURIComponent(pair[1]));
+                }
+            }
+            return query_string;
+        }()),
         getMethodUrl: function (methodName, args) {
-            var url = this.apiURL + methodName + '?v=' + this.apiVersion;
+            var url = this.apiURL + methodName;
+            var urlArgs = [];
             if (typeof args === 'object') {
                 for (var i in args) {
                     if (args[i] !== undefined) {
-                        url += ('&' + i + '=' + args[i]);
+                        urlArgs.push(i + '=' + encodeURIComponent(args[i]));
                     }
                 }
+            }
+            if (urlArgs.length) {
+                url += '?' + urlArgs.join('&');
             }
             return url;
         },
         getStaticUrl: function (staticPath) {
-            return this.staticPrefix + staticPath;
+            return this.webRoot + this.staticPrefix + staticPath;
         },
         getMediaUrl: function (mediaPath) {
-            return this.mediaPrefix + mediaPath;
+            return this.webRoot + this.mediaPrefix + mediaPath;
+        },
+
+        apiCall: function (method, data, options) {
+            options = options || {};
+            data = data || {};
+            var requestData = _.extend({}, this.apiPersistentData, data);
+            $.ajax({
+                method: options.method || this.apiMethod,
+                url: this.getMethodUrl(method),
+                data: requestData,
+                beforeSend: options.onProgressStart || function () {},
+                complete: options.onProgressEnd || function () {},
+                success: options.onSuccess || function () {},
+                error: options.onError || function () {}
+            });
+        },
+        getImgCropUrl: function (url, width, height) {
+            return this._getImgFilterUrl(url, width, height, 'crop');
+        },
+        getImgResizeUrl: function (url, width, height) {
+            return this._getImgFilterUrl(url, width, height, 'resize');
+        },
+        _getImgFilterUrl: function (url, width, height, type) {
+            width = parseInt(width, 10);
+            height = parseInt(height, 10);
+
+            width = isNaN(width) ? '-' : String(width);
+            height = isNaN(height) ? '-' : String(height);
+
+            return this.imgResizerUrl + '/' + type + '/' + width + 'x' + height + '?url=' + url;
         }
     };
 
@@ -100,7 +197,7 @@
                 dataType: 'json'
             };
             if (!options.url) {
-                params.url = _.result(model, 'url') || console.error('URL not defined');
+                params.url = _.result(model, 'url') || BackboneKTS.error('URL not defined');
             }
             if (options.data === null && model && (method === 'create' || method === 'update' || method === 'patch')) {
                 params.contentType = 'application/json';
@@ -129,6 +226,7 @@
             if (params.type !== 'GET' && !options.emulateJSON) {
                 params.processData = false;
             }
+
             var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
             model.trigger('request', model, xhr, options);
             return xhr;
@@ -138,132 +236,127 @@
         }
     });
 
-    BackboneKTS.Router = Backbone.Router.extend({
-        redirect: function (path) {
-            Backbone.history.navigate('/' + path, true);
-        },
-        _viewsInstance: {},
-        views: {},
-        _getViewByName: function (name) {
-            if (typeof this._viewsInstance[name] === 'undefined') {
-                var View = this.views[name];
-                if (typeof View !== 'undefined') {
-                    this._viewsInstance[name] = new View();
-                } else {
-                    return null;
-                }
+    BackboneKTS.Router = Backbone.Router.extend(_.extend({
+            redirect: function (path) {
+                Backbone.history.navigate('/' + path, true);
             }
-            return this._viewsInstance[name];
-        }
-    });
+        },
+        BackboneKTS.viewManagerMixin
+    ));
 
-    BackboneKTS.View = Backbone.View.extend({
-        el: '#content',
-        actions: function () {
-            return {};
-        },
-        redirect: function (path) {
-            Backbone.history.navigate('/' + path, true);
-        },
-        render: function () {
-            var action = arguments[0];
-            var passArguments = null;
-            if (typeof  action !== "string") {
-                action = 'index';
-                passArguments = Array.prototype.slice.call(arguments, 0);
-            } else {
-                passArguments = Array.prototype.slice.call(arguments, 1);
-            }
-            if (typeof this.actions()[action] === 'function') {
-                this.actions()[action].apply(this, passArguments);
-            } else {
-                this._defaultAction();
-            }
-        },
-        serializeForm: function (form) {
-            var result = {};
-            _.each($(form).serializeArray(), function (element) {
-                var regexp = /\[(\w+)\]/ig;
-                var matchField = element.name.match(regexp);
-                if (matchField === null) {
-                    result[element.name] = element.value;
+    BackboneKTS.View = Backbone.View.extend(_.extend({
+            el: '#content',
+            redirect: function (path) {
+                Backbone.history.navigate('/' + path, true);
+            },
+            beforeAction: function () {},
+            afterAction: function () {},
+            render: function () {
+                var action = arguments[0];
+                var passArguments = null;
+                if (typeof  action !== "string") {
+                    action = 'index';
+                    passArguments = Array.prototype.slice.call(arguments, 0);
                 } else {
-                    var fieldName = element.name.slice(0, element.name.search(regexp));
-                    var walkFields = function (object, chain, value) {
-                        if (chain.length === 0) {
-                            if (!isNaN(parseInt(value, 10)) && String(parseInt(value, 10)).length === value.length) {
-                                return parseInt(value, 10);
-                            }
-                            if (!isNaN(parseFloat(value)) && String(parseFloat(value)).length === value.length) {
-                                return parseFloat(value);
-                            }
-                            return value;
-                        } else {
-                            var indexName = chain[0].slice(1, chain[0].length - 1);
-                            if (isNaN(parseInt(indexName, 10)) || String(parseInt(indexName, 10)).length !== indexName.length) {
-                                if (object === undefined) {
-                                    object = {};
+                    passArguments = Array.prototype.slice.call(arguments, 1);
+                }
+                this.beforeAction();
+                var actionCapitalized = action.charAt(0).toUpperCase() + action.substring(1).toLowerCase();
+                var actionHandler = 'action' + actionCapitalized;
+                if (typeof this[actionHandler] === 'function') {
+                    this[actionHandler].apply(this, passArguments);
+                } else {
+                    this._defaultAction();
+                }
+                this.afterAction();
+            },
+            serializeForm: function (form) {
+                var result = {};
+                _.each($(form).serializeArray(), function (element) {
+                    var regexp = /\[(\w+)\]/ig;
+                    var matchField = element.name.match(regexp);
+                    if (matchField === null) {
+                        result[element.name] = element.value;
+                    } else {
+                        var fieldName = element.name.slice(0, element.name.search(regexp));
+                        var walkFields = function (object, chain, value) {
+                            if (chain.length === 0) {
+                                if (!isNaN(parseInt(value, 10)) && String(parseInt(value, 10)).length === value.length) {
+                                    return parseInt(value, 10);
                                 }
+                                if (!isNaN(parseFloat(value)) && String(parseFloat(value)).length === value.length) {
+                                    return parseFloat(value);
+                                }
+                                return value;
                             } else {
-                                if (object === undefined) {
-                                    object = [];
+                                var indexName = chain[0].slice(1, chain[0].length - 1);
+                                if (isNaN(parseInt(indexName, 10)) || String(parseInt(indexName, 10)).length !== indexName.length) {
+                                    if (object === undefined) {
+                                        object = {};
+                                    }
+                                } else {
+                                    if (object === undefined) {
+                                        object = [];
+                                    }
+                                }
+                                object[indexName] = walkFields(object[indexName], chain.slice(1), value);
+                            }
+                            return object;
+                        };
+                        result[fieldName] = walkFields(result[fieldName], matchField, element.value);
+                    }
+                });
+                _.map(result, function (value, key) {
+                    if (typeof value === 'object') {
+                        if (Array.isArray(value)) {
+                            var nullLessArray = [];
+                            for (var i in value) {
+                                if (value[i] !== null && value[i] !== undefined) {
+                                    nullLessArray.push(value[i]);
                                 }
                             }
-                            object[indexName] = walkFields(object[indexName], chain.slice(1), value);
+                            value = nullLessArray;
                         }
-                        return object;
-                    };
-                    result[fieldName] = walkFields(result[fieldName], matchField, element.value);
-                }
-            });
-            _.map(result, function (value, key) {
-                if (typeof value === 'object') {
-                    if (Array.isArray(value)) {
-                        var nullLessArray = [];
-                        for (var i in value) {
-                            if (value[i] !== null && value[i] !== undefined) {
-                                nullLessArray.push(value[i]);
-                            }
-                        }
-                        value = nullLessArray;
+                        result[key] = JSON.stringify(value);
                     }
-                    result[key] = JSON.stringify(value);
+                });
+                return result;
+            },
+            _defaultAction: function () {
+                this.$el.html($('<h1/>', {html: '404'}));
+            },
+            _showSuccess: function (title, text) {
+                if (title === undefined) {
+                    title = 'Выполнено';
                 }
-            });
-            return result;
+                if (Notific !== undefined) {
+                    Notific.success({
+                        title: title,
+                        text: text,
+                        timeout: 2000
+                    });
+                } else {
+                    BackboneKTS.debugLog('Notific is undefined');
+                }
+            },
+            _showError: function (title, text) {
+                if (title === undefined) {
+                    title = 'Ошибка';
+                }
+                if (Notific !== undefined) {
+                    Notific.error({
+                        title: title,
+                        text: text,
+                        timeout: 2000
+                    });
+                } else {
+                    BackboneKTS.debugLog('Notific is undefined');
+                }
+            }
         },
-        _defaultAction: function () {
-            this.$el.html($('<h1/>', {html: '404'}));
-        },
-        _showSuccess: function (title, text) {
-            if (title === undefined) {
-                title = 'Выполнено';
-            }
-            if (Notific !== undefined) {
-                Notific.success({
-                    title: title,
-                    text: text,
-                    timeout: 2000
-                });
-            } else {
-                console.log('Notific is undefined');
-            }
-        },
-        _showError: function (title, text) {
-            if (title === undefined) {
-                title = 'Ошибка';
-            }
-            if (Notific !== undefined) {
-                Notific.error({
-                    title: title,
-                    text: text,
-                    timeout: 2000
-                });
-            } else {
-                console.log('Notific is undefined');
-            }
-        }
-    });
+        BackboneKTS.viewManagerMixin,
+        BackboneKTS.validationMixin
+    ));
 
     return BackboneKTS;
 }));
