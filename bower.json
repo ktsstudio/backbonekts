@@ -1,6 +1,6 @@
 {
   "name": "backbonekts",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "authors": [
     "kts <team@ktsstudio.ru>"
   ],
@@ -15,7 +15,6 @@
     "amd",
     "requrejs"
   ],
-  "private": false,
   "license": "MIT",
   "homepage": "http://gitlab.ktsstudio.ru/kts-libs/backbonekts",
   "ignore": [
