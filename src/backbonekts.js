@@ -263,7 +263,7 @@
                 }
                 this.afterAction();
             },
-            serializeForm: function (form) {
+            serializeForm: function (form, noStringify) {
                 var result = {};
                 _.each($(form).serializeArray(), function (element) {
                     var regexp = /\[(\w+)\]/ig;
@@ -310,7 +310,9 @@
                             }
                             value = nullLessArray;
                         }
-                        result[key] = JSON.stringify(value);
+                        if (noStringify !== true) {
+                            result[key] = JSON.stringify(value);
+                        }
                     }
                 });
                 return result;
