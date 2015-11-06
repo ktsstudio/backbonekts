@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.2.0 - 2015-11-05
+* backbonekts - v0.2.0 - 2015-11-06
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2015 kts
 * Licensed MIT 
@@ -270,7 +270,7 @@
                 }
                 this.afterAction();
             },
-            serializeForm: function (form) {
+            serializeForm: function (form, noStringify) {
                 var result = {};
                 _.each($(form).serializeArray(), function (element) {
                     var regexp = /\[(\w+)\]/ig;
@@ -317,7 +317,9 @@
                             }
                             value = nullLessArray;
                         }
-                        result[key] = JSON.stringify(value);
+                        if (noStringify !== true) {
+                            result[key] = JSON.stringify(value);
+                        }
                     }
                 });
                 return result;
