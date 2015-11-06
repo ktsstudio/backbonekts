@@ -263,6 +263,9 @@
             redirect: function (path) {
                 Backbone.history.navigate('/' + path, true);
             },
+            random: function () {
+                return parseInt(Math.random() * Math.pow(2, 31), 10);
+            },
             beforeAction: function () {},
             afterAction: function () {},
             render: function () {
