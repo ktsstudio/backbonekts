@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.2.4 - 2015-11-06
+* backbonekts - v0.2.5 - 2015-11-06
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2015 kts
 * Licensed MIT 
@@ -269,6 +269,9 @@
             el: '#content',
             redirect: function (path) {
                 Backbone.history.navigate('/' + path, true);
+            },
+            random: function () {
+                return parseInt(Math.random() * Math.pow(2, 31), 10);
             },
             beforeAction: function () {},
             afterAction: function () {},
