@@ -40,6 +40,27 @@
             return this._viewsInstance[name];
         }
     };
+    
+    BackboneKTS.htmlGeneratorMixin = {
+        html: {
+            select: function (options) {
+                var result = '<select class="form-control" name="' + options.name + '">';
+                var optionTemplate = _.template('<option value="<%- value %>" <%- selected %>><%- title %></option>');
+
+                for (var item in options.values) {
+                    if (options.values.hasOwnProperty(item)) {
+                        result += optionTemplate({
+                            value: item,
+                            selected: item === options.selected ? 'selected' : '',
+                            title: options.values[item]
+                        });
+                    }
+                }
+                result += '</select>';
+                return result;
+            }
+        }
+    };
 
     BackboneKTS.validationMixin = {
         validateEmail: function (email) {
@@ -350,7 +371,8 @@
             }
         },
         BackboneKTS.viewManagerMixin,
-        BackboneKTS.validationMixin
+        BackboneKTS.validationMixin,
+        BackboneKTS.htmlGeneratorMixin
     ));
 
     return BackboneKTS;

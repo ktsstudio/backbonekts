@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.2.0 - 2015-11-06
+* backbonekts - v0.2.4 - 2015-11-06
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2015 kts
 * Licensed MIT 
@@ -45,6 +45,27 @@
                 }
             }
             return this._viewsInstance[name];
+        }
+    };
+    
+    BackboneKTS.htmlGeneratorMixin = {
+        html: {
+            select: function (options) {
+                var result = '<select class="form-control" name="' + options.name + '">';
+                var optionTemplate = _.template('<option value="<%- value %>" <%- selected %>><%- title %></option>');
+
+                for (var item in options.values) {
+                    if (options.values.hasOwnProperty(item)) {
+                        result += optionTemplate({
+                            value: item,
+                            selected: item === options.selected ? 'selected' : '',
+                            title: options.values[item]
+                        });
+                    }
+                }
+                result += '</select>';
+                return result;
+            }
         }
     };
 
@@ -357,7 +378,8 @@
             }
         },
         BackboneKTS.viewManagerMixin,
-        BackboneKTS.validationMixin
+        BackboneKTS.validationMixin,
+        BackboneKTS.htmlGeneratorMixin
     ));
 
     return BackboneKTS;
