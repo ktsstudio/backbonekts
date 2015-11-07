@@ -308,6 +308,8 @@
                         }
                         if (noStringify !== true) {
                             result[key] = JSON.stringify(value);
+                        }  else {
+                            result[key] = value;
                         }
                     }
                 });
