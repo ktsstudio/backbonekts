@@ -294,6 +294,25 @@
                 }
                 this.afterAction();
             },
+            keyValueReducer: function (result, noStringify) {
+                _.map(result, function (value, key) {
+                    if (typeof value === 'object') {
+                        if (Array.isArray(value)) {
+                            var nullLessArray = [];
+                            for (var i in value) {
+                                if (value[i] !== null && value[i] !== undefined) {
+                                    nullLessArray.push(value[i]);
+                                }
+                            }
+                            value = nullLessArray;
+                        }
+                        if (noStringify !== true) {
+                            result[key] = JSON.stringify(value);
+                        }
+                    }
+                });
+                return result;
+            },
             serializeForm: function (form, noStringify) {
                 var result = {};
                 _.each($(form).serializeArray(), function (element) {
@@ -330,23 +349,7 @@
                         result[fieldName] = walkFields(result[fieldName], matchField, element.value);
                     }
                 });
-                _.map(result, function (value, key) {
-                    if (typeof value === 'object') {
-                        if (Array.isArray(value)) {
-                            var nullLessArray = [];
-                            for (var i in value) {
-                                if (value[i] !== null && value[i] !== undefined) {
-                                    nullLessArray.push(value[i]);
-                                }
-                            }
-                            value = nullLessArray;
-                        }
-                        if (noStringify !== true) {
-                            result[key] = JSON.stringify(value);
-                        }
-                    }
-                });
-                return result;
+                return this.keyValueReducer(result, noStringify);
             },
             _defaultAction: function () {
                 this.$el.html($('<h1/>', {html: '404'}));
