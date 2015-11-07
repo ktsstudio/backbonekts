@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.2.5 - 2015-11-06
+* backbonekts - v0.2.6 - 2015-11-07
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2015 kts
 * Licensed MIT 
@@ -189,6 +189,13 @@
     };
 
     BackboneKTS.Model = Backbone.Model.extend({
+        get: function (key, default_value) {
+            var value = Backbone.Model.prototype.get.call(this, key);
+            if (value === null || value === undefined) {
+                value = default_value;
+            }
+            return value;
+        },
         parse: function (response, options) {
             if (options.collection) {
                 return response;

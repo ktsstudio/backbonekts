@@ -182,6 +182,13 @@
     };
 
     BackboneKTS.Model = Backbone.Model.extend({
+        get: function (key, default_value) {
+            var value = Backbone.Model.prototype.get.call(this, key);
+            if (value === null || value === undefined) {
+                value = default_value;
+            }
+            return value;
+        },
         parse: function (response, options) {
             if (options.collection) {
                 return response;
