@@ -45,7 +45,7 @@
         html: {
             select: function (options) {
                 var result = $('<select />', {
-                    class: 'form-control',
+                    class: options.class || 'form-control',
                     name: options.name
                 });
 

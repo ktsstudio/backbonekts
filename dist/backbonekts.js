@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.3.1 - 2015-11-17
+* backbonekts - v0.3.2 - 2015-11-17
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2015 kts
 * Licensed MIT 
@@ -52,7 +52,7 @@
         html: {
             select: function (options) {
                 var result = $('<select />', {
-                    class: 'form-control',
+                    class: options.class || 'form-control',
                     name: options.name
                 });
 
