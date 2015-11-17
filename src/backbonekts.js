@@ -44,20 +44,35 @@
     BackboneKTS.htmlGeneratorMixin = {
         html: {
             select: function (options) {
-                var result = '<select class="form-control" name="' + options.name + '">';
-                var optionTemplate = _.template('<option value="<%- value %>" <%- selected %>><%- title %></option>');
+                var result = $('<select />', {
+                    class: 'form-control',
+                    name: options.name
+                });
 
                 for (var item in options.values) {
                     if (options.values.hasOwnProperty(item)) {
-                        result += optionTemplate({
-                            value: item,
-                            selected: item === options.selected ? 'selected' : '',
-                            title: options.values[item]
-                        });
+                        var element = $('<option />', {value: item}),
+                            values = options.values[item];
+
+                        if (typeof values !== 'object') {
+                            element.html(values);
+                        } else {
+                            for (var key in values) {
+                                if (values.hasOwnProperty(key)) {
+                                    var value = values[key];
+                                    if (key === 'html') {
+                                        element.html(value);
+                                    } else {
+                                        element.attr(key, value);
+                                    }
+                                }
+                            }
+                        }
+                        element.appendTo(result);
                     }
                 }
-                result += '</select>';
-                return result;
+
+                return result.prop('outerHTML');
             }
         }
     };
