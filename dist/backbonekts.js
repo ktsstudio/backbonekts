@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.3.0 - 2015-11-17
+* backbonekts - v0.3.1 - 2015-11-17
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2015 kts
 * Licensed MIT 
