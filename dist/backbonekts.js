@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.3.2 - 2015-11-17
+* backbonekts - v0.3.3 - 2015-11-18
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2015 kts
 * Licensed MIT 
@@ -60,6 +60,10 @@
                     if (options.values.hasOwnProperty(item)) {
                         var element = $('<option />', {value: item}),
                             values = options.values[item];
+                            
+                        if (item === options.selected) {
+                            element.attr('selected', true);
+                        }
 
                         if (typeof values !== 'object') {
                             element.html(values);
