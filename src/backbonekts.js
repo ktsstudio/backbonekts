@@ -53,6 +53,10 @@
                     if (options.values.hasOwnProperty(item)) {
                         var element = $('<option />', {value: item}),
                             values = options.values[item];
+                            
+                        if (item === options.selected) {
+                            element.attr('selected', true);
+                        }
 
                         if (typeof values !== 'object') {
                             element.html(values);
