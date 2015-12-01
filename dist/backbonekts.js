@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.3.3 - 2015-11-18
+* backbonekts - v0.3.4 - 2015-12-01
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2015 kts
 * Licensed MIT 
@@ -56,11 +56,14 @@
                     name: options.name
                 });
 
+                delete options.class;
+                delete options.name;
+
                 for (var item in options.values) {
                     if (options.values.hasOwnProperty(item)) {
                         var element = $('<option />', {value: item}),
                             values = options.values[item];
-                            
+
                         if (item === options.selected) {
                             element.attr('selected', true);
                         }
@@ -80,6 +83,14 @@
                             }
                         }
                         element.appendTo(result);
+                    }
+                }
+
+                delete options.values;
+
+                for (item in options) {
+                    if (options.hasOwnProperty(item)) {
+                        result.attr(item, options[item]);
                     }
                 }
 
