@@ -49,11 +49,14 @@
                     name: options.name
                 });
 
+                delete options.class;
+                delete options.name;
+
                 for (var item in options.values) {
                     if (options.values.hasOwnProperty(item)) {
                         var element = $('<option />', {value: item}),
                             values = options.values[item];
-                            
+
                         if (item === options.selected) {
                             element.attr('selected', true);
                         }
@@ -73,6 +76,14 @@
                             }
                         }
                         element.appendTo(result);
+                    }
+                }
+
+                delete options.values;
+
+                for (item in options) {
+                    if (options.hasOwnProperty(item)) {
+                        result.attr(item, options[item]);
                     }
                 }
 
