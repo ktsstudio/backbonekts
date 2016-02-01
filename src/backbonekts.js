@@ -25,6 +25,47 @@
         }
     };
 
+    BackboneKTS.serializeFormMixin = {
+        serializeForm: function (form, noStringify) {
+            var result = {};
+            _.each($(form).serializeArray(), function (element) {
+                var regexp = /\[(\w+)\]/ig;
+                var matchField = element.name.match(regexp);
+                if (matchField === null) {
+                    result[element.name] = element.value;
+                } else {
+                    var fieldName = element.name.slice(0, element.name.search(regexp));
+                    var walkFields = function (object, chain, value) {
+                        if (chain.length === 0) {
+                            if (!isNaN(parseInt(value, 10)) && String(parseInt(value, 10)).length === value.length) {
+                                return parseInt(value, 10);
+                            }
+                            if (!isNaN(parseFloat(value)) && String(parseFloat(value)).length === value.length) {
+                                return parseFloat(value);
+                            }
+                            return value;
+                        } else {
+                            var indexName = chain[0].slice(1, chain[0].length - 1);
+                            if (isNaN(parseInt(indexName, 10)) || String(parseInt(indexName, 10)).length !== indexName.length) {
+                                if (object === undefined) {
+                                    object = {};
+                                }
+                            } else {
+                                if (object === undefined) {
+                                    object = [];
+                                }
+                            }
+                            object[indexName] = walkFields(object[indexName], chain.slice(1), value);
+                        }
+                        return object;
+                    };
+                    result[fieldName] = walkFields(result[fieldName], matchField, element.value);
+                }
+            });
+            return this.keyValueReducer(result, noStringify);
+        }
+    };
+
     BackboneKTS.viewManagerMixin = {
         _viewsInstance: {},
         views: {},
@@ -40,7 +81,7 @@
             return this._viewsInstance[name];
         }
     };
-    
+
     BackboneKTS.htmlGeneratorMixin = {
         html: {
             select: function (options) {
@@ -292,7 +333,8 @@
                 Backbone.history.navigate('/' + path, true);
             }
         },
-        BackboneKTS.viewManagerMixin
+        BackboneKTS.viewManagerMixin,
+        BackboneKTS.serializeFormMixin
     ));
 
     BackboneKTS.View = Backbone.View.extend(_.extend({
@@ -345,44 +387,6 @@
                 });
                 return result;
             },
-            serializeForm: function (form, noStringify) {
-                var result = {};
-                _.each($(form).serializeArray(), function (element) {
-                    var regexp = /\[(\w+)\]/ig;
-                    var matchField = element.name.match(regexp);
-                    if (matchField === null) {
-                        result[element.name] = element.value;
-                    } else {
-                        var fieldName = element.name.slice(0, element.name.search(regexp));
-                        var walkFields = function (object, chain, value) {
-                            if (chain.length === 0) {
-                                if (!isNaN(parseInt(value, 10)) && String(parseInt(value, 10)).length === value.length) {
-                                    return parseInt(value, 10);
-                                }
-                                if (!isNaN(parseFloat(value)) && String(parseFloat(value)).length === value.length) {
-                                    return parseFloat(value);
-                                }
-                                return value;
-                            } else {
-                                var indexName = chain[0].slice(1, chain[0].length - 1);
-                                if (isNaN(parseInt(indexName, 10)) || String(parseInt(indexName, 10)).length !== indexName.length) {
-                                    if (object === undefined) {
-                                        object = {};
-                                    }
-                                } else {
-                                    if (object === undefined) {
-                                        object = [];
-                                    }
-                                }
-                                object[indexName] = walkFields(object[indexName], chain.slice(1), value);
-                            }
-                            return object;
-                        };
-                        result[fieldName] = walkFields(result[fieldName], matchField, element.value);
-                    }
-                });
-                return this.keyValueReducer(result, noStringify);
-            },
             _defaultAction: function () {
                 this.$el.html($('<h1/>', {html: '404'}));
             },
@@ -417,7 +421,8 @@
         },
         BackboneKTS.viewManagerMixin,
         BackboneKTS.validationMixin,
-        BackboneKTS.htmlGeneratorMixin
+        BackboneKTS.htmlGeneratorMixin,
+        BackboneKTS.serializeFormMixin
     ));
 
     return BackboneKTS;
