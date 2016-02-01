@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.3.4 - 2016-02-01
+* backbonekts - v0.3.6 - 2016-02-01
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2016 kts
 * Licensed MIT 
@@ -70,6 +70,27 @@
                 }
             });
             return this.keyValueReducer(result, noStringify);
+        },
+        keyValueReducer: function (result, noStringify) {
+            _.map(result, function (value, key) {
+                if (typeof value === 'object') {
+                    if (Array.isArray(value)) {
+                        var nullLessArray = [];
+                        for (var i in value) {
+                            if (value[i] !== null && value[i] !== undefined) {
+                                nullLessArray.push(value[i]);
+                            }
+                        }
+                        value = nullLessArray;
+                    }
+                    if (noStringify !== true) {
+                        result[key] = JSON.stringify(value);
+                    }  else {
+                        result[key] = value;
+                    }
+                }
+            });
+            return result;
         }
     };
 
@@ -372,27 +393,6 @@
                     this._defaultAction();
                 }
                 this.afterAction();
-            },
-            keyValueReducer: function (result, noStringify) {
-                _.map(result, function (value, key) {
-                    if (typeof value === 'object') {
-                        if (Array.isArray(value)) {
-                            var nullLessArray = [];
-                            for (var i in value) {
-                                if (value[i] !== null && value[i] !== undefined) {
-                                    nullLessArray.push(value[i]);
-                                }
-                            }
-                            value = nullLessArray;
-                        }
-                        if (noStringify !== true) {
-                            result[key] = JSON.stringify(value);
-                        }  else {
-                            result[key] = value;
-                        }
-                    }
-                });
-                return result;
             },
             _defaultAction: function () {
                 this.$el.html($('<h1/>', {html: '404'}));
