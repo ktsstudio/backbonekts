@@ -1,12 +1,13 @@
 {
   "name": "backbonekts",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Base classes for powerful Backbone development",
   "keywords": [
     "backbone",
     "amd",
     "requrejs"
   ],
+  "main": "dist/backbonekts.js",
   "homepage": "http://gitlab.ktsstudio.ru/kts-libs/backbonekts",
   "bugs": "http://gitlab.ktsstudio.ru/kts-libs/backbonekts",
   "author": {
