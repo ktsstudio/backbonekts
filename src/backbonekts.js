@@ -1,14 +1,19 @@
-(function (exports, module) {
+(function (exports, factory) {
     "use strict";
-    if (typeof define === 'function' && define.amd) {
-        // AMD environment
-        define(['backbone', 'underscore', 'notific', 'jquery'], module);
-    } else if (typeof exports === 'object') {
+    if (typeof exports === 'object') {
         // CommonJS environment
-        module.exports = module();
+        var backbone = require('backbone');
+        var _ = require('underscore');
+        var notific = require('notific');
+        var $ = require('jquery');
+
+        module.exports = factory(backbone, _, notific, $);
+    } else if (typeof define === 'function' && define.amd) {
+        // AMD environment
+        define(['backbone', 'underscore', 'notific', 'jquery'], factory);
     } else {
         // Browser environment
-        exports.BackboneKTS = module();
+        exports.BackboneKTS = factory();
     }
 }(typeof exports === 'object' && exports || this, function (Backbone, _, Notific, $) {
     var BackboneKTS = {};

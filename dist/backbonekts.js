@@ -1,21 +1,26 @@
 /*! 
-* backbonekts - v0.3.6 - 2016-02-01
+* backbonekts - v0.3.8 - 2016-10-06
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2016 kts
 * Licensed MIT 
 */
 
-(function (exports, module) {
+(function (exports, factory) {
     "use strict";
-    if (typeof define === 'function' && define.amd) {
-        // AMD environment
-        define(['backbone', 'underscore', 'notific', 'jquery'], module);
-    } else if (typeof exports === 'object') {
+    if (typeof exports === 'object') {
         // CommonJS environment
-        module.exports = module();
+        var backbone = require('backbone');
+        var _ = require('underscore');
+        var notific = require('notific');
+        var $ = require('jquery');
+
+        module.exports = factory(backbone, _, notific, $);
+    } else if (typeof define === 'function' && define.amd) {
+        // AMD environment
+        define(['backbone', 'underscore', 'notific', 'jquery'], factory);
     } else {
         // Browser environment
-        exports.BackboneKTS = module();
+        exports.BackboneKTS = factory();
     }
 }(typeof exports === 'object' && exports || this, function (Backbone, _, Notific, $) {
     var BackboneKTS = {};
