@@ -247,22 +247,24 @@
             return this.webRoot + this.mediaPrefix + mediaPath;
         },
 
-        apiCall: function (method, data, options) {
+        apiCall: function (method, data, options, ajaxOptions) {
             options = options || {};
+            ajaxOptions = ajaxOptions || {};
             data = data || {};
             if (!(data instanceof FormData)) {
                 data = _.extend({}, this.apiPersistentData, data);
             }
-            $.ajax({
+            $.ajax(_.extend({
                 method: options.method || this.apiMethod,
                 url: this.getMethodUrl(method),
                 data: data,
                 beforeSend: options.onProgressStart || function () {},
                 complete: options.onProgressEnd || function () {},
                 success: options.onSuccess || function () {},
-                error: options.onError || function () {}
-            });
+                error: options.onError || function () {},
+            }, ajaxOptions));
         },
+        
         getImgCropUrl: function (url, width, height) {
             return this._getImgFilterUrl(url, width, height, 'crop');
         },
