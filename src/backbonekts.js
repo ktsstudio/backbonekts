@@ -250,11 +250,13 @@
         apiCall: function (method, data, options) {
             options = options || {};
             data = data || {};
-            var requestData = _.extend({}, this.apiPersistentData, data);
+            if (!(data instanceof FormData)) {
+                data = _.extend({}, this.apiPersistentData, data);
+            }
             $.ajax({
                 method: options.method || this.apiMethod,
                 url: this.getMethodUrl(method),
-                data: requestData,
+                data: data,
                 beforeSend: options.onProgressStart || function () {},
                 complete: options.onProgressEnd || function () {},
                 success: options.onSuccess || function () {},
