@@ -254,7 +254,7 @@
             if (!(data instanceof FormData)) {
                 data = _.extend({}, this.apiPersistentData, data);
             }
-            $.ajax(_.extend({
+            return $.ajax(_.extend({
                 method: options.method || this.apiMethod,
                 url: this.getMethodUrl(method),
                 data: data,

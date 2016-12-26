@@ -1,5 +1,5 @@
 /*! 
-* backbonekts - v0.3.11 - 2016-11-08
+* backbonekts - v0.3.13 - 2016-12-26
 * http://gitlab.ktsstudio.ru/kts-libs/backbonekts
 * Copyright (c) 2016 kts
 * Licensed MIT 
@@ -261,7 +261,7 @@
             if (!(data instanceof FormData)) {
                 data = _.extend({}, this.apiPersistentData, data);
             }
-            $.ajax(_.extend({
+            return $.ajax(_.extend({
                 method: options.method || this.apiMethod,
                 url: this.getMethodUrl(method),
                 data: data,
