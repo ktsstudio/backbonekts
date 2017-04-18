@@ -399,29 +399,35 @@
             _defaultAction: function () {
                 this.$el.html($('<h1/>', {html: '404'}));
             },
-            _showSuccess: function (title, text) {
+            _showSuccess: function (title, text, timeout) {
                 if (title === undefined) {
                     title = 'Выполнено';
+                }
+                if (timeout === undefined) {
+                    timeout = 2000;
                 }
                 if (Notific !== undefined) {
                     Notific.success({
                         title: title,
                         text: text,
-                        timeout: 2000
+                        timeout: timeout
                     });
                 } else {
                     BackboneKTS.debugLog('Notific is undefined');
                 }
             },
-            _showError: function (title, text) {
+            _showError: function (title, text, timeout) {
                 if (title === undefined) {
                     title = 'Ошибка';
+                }
+                if (timeout === undefined) {
+                    timeout = 2000;
                 }
                 if (Notific !== undefined) {
                     Notific.error({
                         title: title,
                         text: text,
-                        timeout: 2000
+                        timeout: timeout
                     });
                 } else {
                     BackboneKTS.debugLog('Notific is undefined');
